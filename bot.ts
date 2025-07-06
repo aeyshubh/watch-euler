@@ -2,7 +2,7 @@ import { Bot, InlineKeyboard } from "grammy";
 import dotenv  from "dotenv";
 import { getLendInfo } from "./commands/lend";
 import { getBorrowAndLendInfo } from "./commands/borrowAndLend";
-
+import { insertData,insertBotWallet, getUserWalletAddress } from "./helpers/db";
 dotenv.config();
 
 //Store bot screaming status
@@ -31,9 +31,10 @@ bot.api.setMyCommands([
 //Pre-assign button text
 const lendButton = 'Lend';
 const borrowAndLend = 'Borrow and Lend';
+const trackWallet = 'Track Wallet';
 
 //Build keyboards
-const firstMenuMarkup = new InlineKeyboard().text(lendButton, lendButton).text(borrowAndLend, borrowAndLend);
+const firstMenuMarkup = new InlineKeyboard().text(lendButton, lendButton).text(borrowAndLend, borrowAndLend).text(trackWallet, trackWallet);
  
 
 //This handler sends a menu with the inline buttons we pre-assigned above
@@ -44,10 +45,19 @@ bot.command("start", async (ctx) => {
   });
 });
 
+bot.callbackQuery(trackWallet, async (ctx) => {
+  console.log("track wallet");  
+  const data = await ctx.api.sendMessage(ctx.chat!.id, "Please enter your wallet address");
+  console.log(data);
+
+});
+
 //This handler processes back button on the menu
 bot.callbackQuery(lendButton, async (ctx) => {
+  let userId = ctx.from!.username!; 
+  let walletAddress = await getUserWalletAddress(userId);
   //Update message content with corresponding menu section
-  let message = await getLendInfo("0xaB8a67743325347Aa53bCC66850f8F13df87e3AF");
+  let message = await getLendInfo(walletAddress![0].walletAddress!);
   await ctx.editMessageText(message, {
     reply_markup: firstMenuMarkup,  
     parse_mode: "HTML",
@@ -57,7 +67,9 @@ bot.callbackQuery(lendButton, async (ctx) => {
 //This handler processes next button on the menu
 bot.callbackQuery(borrowAndLend, async (ctx) => {
   //Update message content with corresponding menu section
-  let message = await getBorrowAndLendInfo("0xaB8a67743325347Aa53bCC66850f8F13df87e3AF");
+  let userId = ctx.from!.username!; 
+  let walletAddress = await getUserWalletAddress(userId);
+  let message = await getBorrowAndLendInfo(walletAddress![0].walletAddress!);
   await ctx.editMessageText(message, {
     reply_markup: firstMenuMarkup,  
     parse_mode: "HTML", 
@@ -65,24 +77,24 @@ bot.callbackQuery(borrowAndLend, async (ctx) => {
  });
 
 
+// Ethereum address regex pattern
+const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
+
 //This function would be added to the dispatcher as a handler for messages coming from the Bot API
 bot.on("message", async (ctx) => {
   //Print to console
-  console.log(
-    `${ctx.from.first_name} wrote ${
-      "text" in ctx.message ? ctx.message.text : ""
-    }`,
-  );
 
-  if (screaming && ctx.message.text) {
-    //Scream the message
-    await ctx.reply(ctx.message.text.toUpperCase(), {
-      entities: ctx.message.entities,
-    });
-  } else {
-    //This is equivalent to forwarding, without the sender's name
-    await ctx.copyMessage(ctx.message.chat.id);
+  if(ctx.message.text !== undefined){
+    // Check if the message is a valid Ethereum address
+    if (ETH_ADDRESS_REGEX.test(ctx.message.text)) {
+      let status:any = await insertData(ctx.chat!.username!,ctx.message.text,ctx.chat!.id);
+        await ctx.reply("Wallet address added successfully");
+    } else {
+      // Message is not a valid Ethereum address
+      await ctx.reply("Invalid Ethereum address format,enter a valid address");
+    }
   }
+
 });
 
 //Start the Bot

@@ -69,7 +69,7 @@ export async function getBorrowAndLendInfo(address:string): Promise<string> {
                     return "No Positions Found,head to  <a href='https://app.euler.finance'>Euler Finance</a> to get Started";
                 } else {
 
-                    console.log("\n🏥 HEALTH ANALYSIS:");
+                 //   console.log("\n🏥 HEALTH ANALYSIS:");
                     messageString += `<b>\nPosition ${i + 1}</b>\n`;
 
                     
@@ -79,11 +79,11 @@ export async function getBorrowAndLendInfo(address:string): Promise<string> {
                         liquidityInfo.liabilityValue
                     );
                     
-                    console.log(`Health Score: ${healthScore.toFixed(4)}`);
-                    console.log(`Risk Level: ${healthScore > 1.5 ? '🟢 Safe' : healthScore > 1.1 ? '🟡 Warning' : '🔴 High'}`);
-                    
-                    console.log("\n💰 COLLATERAL VALUES:");
-                    messageString +=`\n Borrowing Asset : <b>${Number(formatEtherValue(liquidityInfo.liabilityValue)).toFixed(2)}</b> ${asset1Info.symbol}`;
+                            //console.log(`Health Score: ${healthScore.toFixed(4)}`);
+                            //console.log(`Risk Level: ${healthScore > 1.5 ? '🟢 Safe' : healthScore > 1.1 ? '🟡 Warning' : '🔴 High'}`);
+                            
+                            //console.log("\n💰 COLLATERAL VALUES:");
+                            messageString +=`\n Borrowing Asset : <b>${Number(formatEtherValue(liquidityInfo.liabilityValue)).toFixed(2)}</b> ${asset1Info.symbol}`;
                     messageString +=`\n Collateral Asset : <b>${Number(formatEtherValue(liquidityInfo.collateralValueRaw)).toFixed(2)}</b> ${asset2Info.symbol}`;
 
                     messageString +=`\n Health Score : ${healthScore.toFixed(3)}`;

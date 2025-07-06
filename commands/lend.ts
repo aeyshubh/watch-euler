@@ -23,7 +23,7 @@ export async function getLendInfo(address:string): Promise<string> {
     let accountInfo: AccountInfo[] = [];
 
     trackingData.deposits.forEach(entry => {
-        console.log("Deposit Id:",entry);
+       // console.log("Deposit Id:",entry);
         const vault = `0x${entry.substring(42)}`;
         const subAccount = entry.substring(0, 42);
         accountInfo.push({ account: subAccount, vault: vault });
@@ -51,7 +51,7 @@ export async function getLendInfo(address:string): Promise<string> {
 
                 const asset1 = info.vaultAccountInfo.asset;  
                 const asset1Info = await getTokenInfo(asset1);
-                console.log("You have lend : ", formatUsdcValue(info.vaultAccountInfo.assets.toString())+ " " + asset1Info.symbol);
+              //  console.log("You have lend : ", formatUsdcValue(info.vaultAccountInfo.assets.toString())+ " " + asset1Info.symbol);
                 messageString += `\nYou have lend : <b>${formatUsdcValue(info.vaultAccountInfo.assets.toString()).toFixed(2)}</b> ${asset1Info.symbol}\n`;
             i++;
 
