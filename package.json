@@ -1,0 +1,21 @@
+{
+  "name": "saveme",
+  "version": "1.0.0",
+  "main": "vaults.js",
+  "scripts": {
+    "start": "ts-node ./bot.ts",
+    "dev": "ts-node-dev ./bot.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "github:supabase/supabase-js",
+    "dotenv": "^17.0.1",
+    "ethers": "^6.14.4",
+    "grammy": "^1.11.2",
+    "graphql-request": "^7.2.0"
+  }
+}
