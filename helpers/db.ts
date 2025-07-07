@@ -16,6 +16,15 @@ export const insertData = async (tgId: string, walletAddress: string,chatId:numb
     }
 }
 
+export const insertWeiAmount = async (tgId: string, weiAmount: number) => {
+    try {
+        let { error } = await supabase.from('user').update({wei_amount:weiAmount}).eq('tgId', tgId);
+     
+    } catch (e) {   
+        console.log("Error inserting data", e);
+    }
+}
+
 export const changeAddress = async (tgid: string, data: string) => {
     try{
         let { error } = await supabase.from('user').update([{ walletAddress:data }]).eq('tgId', tgid);
@@ -44,6 +53,14 @@ export const getUserWalletAddress = async (tgId: string) => {
     }
 }
 
+export const getWeiAmount = async (tgId: string) => {
+    try {
+        let { data, error } = await supabase.from('user').select("wei_amount").eq('tgId', tgId);
+        return data;
+    } catch (e) {
+        console.log("Error retrieving data", e);
+    }
+}
 export const getBotWalletAddress = async (tgId: string) => {
     try {
             let { data, error } = await supabase.from('keys').select("botWallet").eq('tgId', tgId);
