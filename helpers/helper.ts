@@ -46,9 +46,7 @@ export async function getTokenInfo(address: string): Promise<tokenInfo> {
     let tokenData = new ethers.Contract(address, ERC20ABI, provider);
     let symbol = await tokenData.symbol();
     let decimals = await tokenData.decimals();
-    console.log("Address : ",address);
-    console.log("Symbol : ",symbol);
-    console.log("Decimals : ",decimals);
+   
     return {
         symbol: symbol,
         decimals: Number(decimals)
