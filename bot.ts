@@ -7,6 +7,7 @@ import { insertData,insertBotWallet, getUserWalletAddress, getBotWalletAddress, 
 import pheripheryAbi from "./pheripheryAbi.json";
 import usdtAbi from "./usdt_abi.json";
 import senderAbi from "./senderAbi.json";
+import addresses from "./addresses.json";
 dotenv.config();
 
 //Store bot screaming status
@@ -34,7 +35,7 @@ async function getLimits(eulerSwap: string, tokenIn: string, tokenOut: string) {
     const provider = new ethers.JsonRpcProvider(process.env.BNB_RPC|| "https://bsc-dataseed1.binance.org/");
     
     // Create contract instance
-    const contractAddress = "0xa8826Bb29f875Db4c4b482463961776390774525";
+    const contractAddress = addresses.contracts.periphery;
     const contract = new ethers.Contract(contractAddress, pheripheryAbi, provider);
     
     // Call getLimits function
@@ -57,7 +58,7 @@ async function checkLimits(wei_amount:number,eulerSwap:string,tokenIn:string,tok
   const provider = new ethers.JsonRpcProvider(process.env.BNB_RPC || "https://bsc-dataseed1.binance.org/");
     
   // Create contract instance
-  const contractAddress = "0xa8826Bb29f875Db4c4b482463961776390774525"; 
+  const contractAddress = addresses.contracts.periphery;
   const contract = new ethers.Contract(contractAddress, pheripheryAbi, provider);
   
   // Call getLimits function
@@ -75,29 +76,53 @@ async function checkLimits(wei_amount:number,eulerSwap:string,tokenIn:string,tok
 // Function to approve USDT spending on the periphery contract
 async function approveUSDT(privateKey: string, amount: bigint,ctx:any,tokenAddress:string) {
   try {
-    const spenderAddress = "0x8EEA079079EF04331e0AA0a93a4D3aDfFe9E10cF";
+    const spenderAddress = addresses.defaults.celo_sender_contract;
     // Create provider
     const provider = new ethers.JsonRpcProvider(process.env.CELO_RPC || "https://rpc.ankr.com/celo");
     
+    const receiverContractAddress = addresses.contracts.bnb_receiverContract;
+    const provider_bnb = new ethers.JsonRpcProvider(process.env.BNB_RPC || "https://bsc-dataseed1.binance.org/");
     // Create wallet instance
     const wallet = new ethers.Wallet(privateKey, provider);
     
     // Create USDT contract instance
     const usdtContract = new ethers.Contract(tokenAddress, usdtAbi, wallet);
+    const bnb_receiverContract = new ethers.Contract(addresses.tokens.usdt.bsc, usdtAbi, provider_bnb);
     
     // Check current allowance first
     console.log("Wallet Address:", wallet.address);
     console.log("Spender Address:", spenderAddress);
+    let balance_bnb_usdt = await bnb_receiverContract.balanceOf(receiverContractAddress);
+    balance_bnb_usdt = Number(balance_bnb_usdt)/10**12;
+    console.log("Balance of BNB Receiver Contract:", balance_bnb_usdt);
     const currentAllowance = await usdtContract.allowance(wallet.address, spenderAddress);
     console.log("Current Allowance:", currentAllowance);
     // If current allowance is sufficient, no need to approve
     if (currentAllowance >= amount) {
+
      ctx.reply("✅ Sufficient allowance already exists");
+     if(amount > balance_bnb_usdt){ 
+      await ctx.reply("Enter a lower amount of USDT, Insufficient balance in BNB Receiver Contract");
+      return {
+        success: false,
+        message: "Insufficient balance in BNB Receiver Contract"
+      };
+     }else{
+      await ctx.reply(" ✅ Sufficient balance in BNB Receiver Contract");
       return {
         success: true
       };
+     }
+
     }
     
+    if(amount > balance_bnb_usdt){ 
+      await ctx.reply("Enter a lower amount of USDT, Insufficient balance in BNB Receiver Contract");
+      return {
+        success: false,
+        message: "Insufficient balance in BNB Receiver Contract"
+      };
+     }else{
     // Approve the amount
     await ctx.reply("Approving USDT...");
     
@@ -106,11 +131,14 @@ async function approveUSDT(privateKey: string, amount: bigint,ctx:any,tokenAddre
     // Wait for transaction confirmation
     const receipt = await approveTx.wait();
     
-    await ctx.reply(`✅ USDT approval successful! \n [Celo Scan Link](https://celoscan.io/tx/${receipt.hash})`);
+    await ctx.reply(`✅ USDT approval successful! \n\n  Celo Scan Link : https://celoscan.io/tx/${receipt.hash}`);
    
     return {
       success: true,
     };
+     }
+
+
     
   } catch (error) {
     console.error("❌ Error approving USDT:", error);
@@ -231,10 +259,10 @@ bot.callbackQuery(privateKey, async (ctx) => {
 
 bot.callbackQuery(USDT_TO_USD1, async (ctx) => {
   try {
-    // Example token addresses (you should replace these with actual addresses)
-    let eulerSwap = "0x5B152Ccd3418E53D796D7933248Ed29bd47C68a8";
-    let tokenIn = "0x55d398326f99059fF775485246999027B3197955";
-    let tokenOut = "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d";   // Replace with actual USD1 token address
+    // Use addresses from addresses.json
+    const eulerSwap = addresses.contracts.eulerSwap;
+    const tokenIn = addresses.tokens.usdt.bsc;
+    const tokenOut = addresses.tokens.usd1.bsc;
     
     const limits = await getLimits(eulerSwap, tokenIn, tokenOut);
     
@@ -253,14 +281,15 @@ bot.callbackQuery(USDT_TO_USD1, async (ctx) => {
 // Ethereum address regex pattern
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
-let eulerSwap = "0x5B152Ccd3418E53D796D7933248Ed29bd47C68a8";
-let tokenIn = "0x55d398326f99059fF775485246999027B3197955";
-let tokenOut = "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d";
-const CELO_USDT_TOKEN_ADDRESS = "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"; 
-let axelarContractAddress = "0x8EEA079079EF04331e0AA0a93a4D3aDfFe9E10cF";
-let receiverContractAddress = "0x8EEA079079EF04331e0AA0a93a4D3aDfFe9E10cF";
-let receiverChain = "binance";
-let receiver="0xaB8a67743325347Aa53bCC66850f8F13df87e3AF"
+// Addresses from addresses.json
+const CELO_USDT_TOKEN_ADDRESS = addresses.tokens.usdt.celo;
+const eulerSwap = addresses.contracts.eulerSwap;
+const tokenIn = addresses.tokens.usdt.bsc;
+const tokenOut = addresses.tokens.usd1.bsc;
+const axelarContractAddress = addresses.contracts.axelarSender;
+const receiverContractAddress = addresses.contracts.bnb_receiverContract;
+const receiverChain = addresses.defaults.receiverChain;
+const receiver = addresses.defaults.receiver;
 //This function would be added to the dispatcher as a handler for messages coming from the Bot API
 bot.on("message", async (ctx) => {
   //Print to console
@@ -321,30 +350,35 @@ bot.on("message", async (ctx) => {
              let provider = new ethers.JsonRpcProvider(process.env.CELO_RPC || "https://rpc.ankr.com/celo");
              let wallet = new ethers.Wallet(privateKey.privateKey, provider);
              let contract = new ethers.Contract(axelarContractAddress, senderAbi, wallet);
-             
-             // Set deadline to 20 minutes from now
-             const deadline = 0; // 20 minutes
-            //  let swap = await contract.sendContractCall(
-            //    receiverChain, 
-            //    receiverContractAddress, 
-            //    wei_amount_data![0].wei_amount, 
-            //    "USDT-USD1", 
-            //    receiver,
-            //  );
-            console.log("Receiver Chain:", receiverChain);
-             console.log("Receiver Contract Address:", receiverContractAddress);
-             console.log("Wei Amount:", wei_amount_data![0].wei_amount);
-             console.log("USDT-USD1");
+             const crossChainFee = ethers.parseEther("0.8"); // 0.8 ETH
+
+             const gasEstimate = await contract.sendContractCall.estimateGas(
+              receiverChain, 
+              receiverContractAddress, 
+              wei_amount_data![0].wei_amount, 
+              "USDT-USD1", 
+              receiver,
+              {value: crossChainFee}
+            );
+
+            let swap = await contract.sendContractCall(
+              receiverChain, 
+              receiverContractAddress, 
+              wei_amount_data![0].wei_amount, 
+              "USDT-USD1", 
+              receiver,
+              {
+                value: crossChainFee,
+                gasLimit: (Number(gasEstimate)*120)/100 // 20% buffer
+              }
+            );
              //console.log("Swap transaction:", swap);
              await ctx.reply("✅ Swap transaction submitted! Waiting for confirmation...");
              
 
              // Wait for transaction confirmation
-            // const receipt = await swap.wait();
-            await ctx.reply("✅ Transaction submitted successfully!");
-            //  await ctx.reply(`✅ Transaction submitted successfully!\nTransaction hash: [Celo Scan Link](https://celoscan.io/tx/${receipt.hash})\n[Axelar Scan Link](https://axelarscan.io/gmp/search?sourceChain=celo&destinationChain=binance)`, {
-            //    parse_mode: "Markdown"
-            //  });
+             const receipt = await swap.wait();
+             await ctx.reply(`✅ Transaction submitted successfully!\n\n  Celo Scan Link : https://celoscan.io/tx/${receipt.hash}\n\n  Axelar Scan Link : https://axelarscan.io/gmp/search?sourceChain=celo&destinationChain=binance \n\n Operation Successful,you'll receive your USD1 on BNB chain after the block finality and on ${receiver} address `);
              
             }catch(error){
               console.log("Error:", error);

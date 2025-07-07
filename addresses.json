@@ -1,0 +1,32 @@
+{
+  "networks": {
+    "bsc": {
+      "rpc": "https://bsc-dataseed1.binance.org/",
+      "chainId": 56
+    },
+    "celo": {
+      "rpc": "https://forno.celo.org",
+      "chainId": 42220
+    }
+  },
+  "contracts": {
+    "eulerSwap": "0x5B152Ccd3418E53D796D7933248Ed29bd47C68a8",
+    "periphery": "0xa8826Bb29f875Db4c4b482463961776390774525",
+    "axelarSender": "0xd6228A92dBFA8F98A3e013B1706F3E6762A20B57",
+    "bnb_receiverContract": "0x909064cF6276d1D2B8Fe7ECEAdFbb77d8b9e9546"
+  },
+  "tokens": {
+    "usdt": {
+      "bsc": "0x55d398326f99059fF775485246999027B3197955",
+      "celo": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e"
+    },
+    "usd1": {
+      "bsc": "0x8d0D000Ee44948FC98c9B98A4FA4921476f08B0d"
+    }
+  },
+  "defaults": {
+    "receiverChain": "binance",
+    "receiver": "0xaB8a67743325347Aa53bCC66850f8F13df87e3AF",
+    "celo_sender_contract": "0xd6228A92dBFA8F98A3e013B1706F3E6762A20B57"
+  }
+} 
