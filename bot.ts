@@ -227,7 +227,7 @@ bot.callbackQuery(borrowAndLend, async (ctx) => {
   let userId = ctx.from!.username!;
   let wallet = await getBotWalletAddress(userId);
   if(wallet && wallet.length > 0){
-   botWalletMenu += `*Bot Wallet Address:* \n\`\`\`${wallet![0].botWallet}\`\`\``
+   botWalletMenu += `*Bot Wallet Address:* \n\n ${wallet![0].botWallet}`
     await ctx.editMessageText(botWalletMenu, {
       reply_markup: botWalletMarkup,
       parse_mode: "MarkdownV2",
