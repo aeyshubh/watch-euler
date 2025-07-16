@@ -1,7 +1,7 @@
 import {TrackingActiveAccount,GraphQLResponse,tokenInfo} from "../types/types"
 import { ethers } from "ethers";
 import { request } from "graphql-request";
-const ERC20ABI = require("../token.json");
+const ERC20ABI = require("../abi/token.json");
 
 export function calculateHealthScore(collateralValueLiquidation: string, liabilityValue: string): number {
     const collateral = parseFloat(ethers.formatEther(collateralValueLiquidation));

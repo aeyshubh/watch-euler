@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { request } from "graphql-request";
-const AccountLensABI = require("../abi.json");
-const ERC20ABI = require("../token.json");
+const AccountLensABI = require("../abi/abi.json");
+const ERC20ABI = require("../abi/token.json");
 import { AccountInfo,AccountInfoResponse } from "../types/types";
 import {getTokenInfo, formatUsdcValue, fetchTrackingActiveAccounts,calculateHealthScore,formatTimeToLiquidation,formatEtherValue } from "../helpers/helper";
 

@@ -4,9 +4,9 @@ import { ethers } from "ethers";
 import { getLendInfo } from "./commands/lend";
 import { getBorrowAndLendInfo } from "./commands/borrowAndLend";
 import { insertData,insertBotWallet, getUserWalletAddress, getBotWalletAddress, getBotWalletPrivateKey, insertWeiAmount, getWeiAmount } from "./helpers/db";
-import pheripheryAbi from "./pheripheryAbi.json";
-import usdtAbi from "./usdt_abi.json";
-import senderAbi from "./senderAbi.json";
+import pheripheryAbi from "./abi/pheripheryAbi.json";
+import usdtAbi from "./abi/usdt_abi.json";
+import senderAbi from "./abi/senderAbi.json";
 import addresses from "./addresses.json";
 dotenv.config();
 
@@ -164,7 +164,7 @@ bot.command("whisper", () => {
  });
 
 //Pre-assign menu text
-const firstMenu = "<b>Main Menu</b>\n\nWelcome to the Watch Euler Bot \n\n Using this bot you can monitor your Euler positions in realtime";
+const firstMenu = "<b>Main Menu</b>\n\nWelcome to the Watch Euler Bot \n\n 1. Using this bot you can monitor your Euler positions in realtime \n\n 2. You can create Cros Chain Euler swap positions in seconds";
 let botWalletMenu = "*Bot Wallet Menu* \n\n Top\\-Up the Below wallet to create Euler swap positions in seconds\\. \n\n Currently following actions are available: \n\n 1\\. Leverage Swap USDT on *CELO* for USD1 on BNB Mainnet \n\n _To perform this,please add CELO tokens in the Bot Walllet\\._";
 bot.api.setMyCommands([
     { command: "start", description: "Get menu for different actions on this bot" }
@@ -227,17 +227,17 @@ bot.callbackQuery(borrowAndLend, async (ctx) => {
   let userId = ctx.from!.username!;
   let wallet = await getBotWalletAddress(userId);
   if(wallet && wallet.length > 0){
-   botWalletMenu += `*Bot Wallet Address:* \n\n ${wallet![0].botWallet}`
-    await ctx.editMessageText(botWalletMenu, {
+    // Build the menu string fresh each time
+    let menu = "*Bot Wallet Menu* \n\n Top\\-Up the Below wallet to create Euler swap positions in seconds\\. \n\n Currently following actions are available: \n\n 1\\. Leverage Swap USDT on *CELO* for USD1 on BNB Mainnet \n\n _To perform this,please add CELO tokens in the Bot Walllet\\._\n\n*Bot Wallet Address:* \n\n" + wallet[0].botWallet;
+    await ctx.editMessageText(menu, {
       reply_markup: botWalletMarkup,
       parse_mode: "MarkdownV2",
     });
-  }else{
+  } else {
     const wallet = generateEthereumWallet();
-    await insertBotWallet(userId,wallet.address,wallet.privateKey,ctx.chat!.id);
+    await insertBotWallet(userId, wallet.address, wallet.privateKey, ctx.chat!.id);
     await ctx.reply("✅ New Ethereum wallet generated! Check the console for details.");
   }
-
 });
 
 bot.callbackQuery(privateKey, async (ctx) => {
@@ -245,12 +245,12 @@ bot.callbackQuery(privateKey, async (ctx) => {
   let privateKey:any = await getBotWalletPrivateKey(userId);
   let botWallet:any = await getBotWalletAddress(userId);
   if(privateKey && privateKey.privateKey.length > 0 && botWallet && botWallet.length > 0){
-    await ctx.editMessageText(`*Bot Wallet Address:* \n\`\`\`${botWallet![0].botWallet}\`\`\`\n\n*Private Key:* \n\`\`\`${privateKey!.privateKey}\`\`\``, {
+    await ctx.reply(`*Bot Wallet Address:* \n\`\`\`${botWallet![0].botWallet}\`\`\`\n\n*Private Key:* \n\`\`\`${privateKey!.privateKey}\`\`\``, {
       reply_markup: botWalletMarkup,
       parse_mode: "MarkdownV2",
     });
   }else{
-    await ctx.editMessageText("No bot wallet found,please generate a new wallet", {
+    await ctx.reply("No bot wallet found,please generate a new wallet", {
       reply_markup: botWalletMarkup,
       parse_mode: "HTML",
     });
@@ -332,8 +332,22 @@ bot.on("message", async (ctx) => {
          
          // Get bot wallet and check if it exists
          let botWallet:any = await getBotWalletAddress(ctx.chat!.username!);
-         if (botWallet && botWallet.length > 0) {
-          console.log("Reached destination");
+         let userWallet:any = await getUserWalletAddress(ctx.chat!.username!);
+         if(userWallet && userWallet.length > 0){
+          await ctx.reply("✅ Address already set, you can track your Euler positions now!");  
+        }else{
+           // Store the receiver address for later use
+           let status:any = await insertData(ctx.chat!.username!, ctx.message.text!, ctx.chat!.id);
+           await ctx.reply("✅ Euler Finance address set successfully! You can track your Euler positions now!");
+          
+        }
+
+        let wei_amount_data = await getWeiAmount(ctx.chat!.username!);
+
+      
+         if (botWallet && botWallet.length > 0 && wei_amount_data![0].wei_amount >0) {
+
+        
            console.log("✅ Bot wallet exists - Call status: READY");
            console.log("Bot wallet address:", botWallet[0].botWallet);
            console.log("Receiver address:", temp_receiver);
@@ -383,10 +397,9 @@ bot.on("message", async (ctx) => {
             }catch(error){
               console.log("Error:", error);
             }
-         } else {
-                     // Store the receiver address for later use
-                     let status:any = await insertData(ctx.chat!.username!, ctx.message.text!, ctx.chat!.id);
-                     await ctx.reply("✅ Receiver address set successfully! Bot wallet is ready for transactions.");
+        
+          } else {
+                  
          }
        } else {
          // Message is not a valid Ethereum address
